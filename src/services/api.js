@@ -7,18 +7,25 @@ function delay(ms) {
 }
 
 export async function fetchNews(query) {
-  const newsApiUrl = `https://newsapi.org/v2/everything?q=${query}&apiKey=${newsApiKey}`;
+  const newsApiUrl = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&apiKey=${newsApiKey}`;
 
   try {
     await delay(500);
-    const response = await fetch(newsApiUrl);
+    const response = await fetch(newsApiUrl, {
+      headers: {
+        'User-Agent': 'news-aggregator/1.0',
+        'Accept': 'application/json',
+      }
+    });
     
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorText = await response.text();
+      console.error('API Error Response:', errorText);
+      throw new Error(`HTTP error! status: ${response.status}, details: ${errorText}`);
     }
     
     const data = await response.json();
-    console.log('News API response:', data); // Debug log
+    console.log('News API response:', data);
     
     if (!data || !data.articles) {
       throw new Error('Invalid API response format');
@@ -27,7 +34,7 @@ export async function fetchNews(query) {
     return data.articles;
   } catch (error) {
     console.error('Error fetching news:', error);
-    throw error; // Propagate the error to be handled by the component
+    throw error;
   }
 }
 
