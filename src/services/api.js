@@ -7,16 +7,27 @@ function delay(ms) {
 }
 
 export async function fetchNews(query) {
-  const newsApiUrl = `https://newsapi.org/v2/everything?q=${query}&apiKey=${newsApiKey}`; // Use HTTPS
+  const newsApiUrl = `https://newsapi.org/v2/everything?q=${query}&apiKey=${newsApiKey}`;
 
   try {
-    await delay(500); // Wait for 500 milliseconds
+    await delay(500);
     const response = await fetch(newsApiUrl);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
     const data = await response.json();
+    console.log('News API response:', data); // Debug log
+    
+    if (!data || !data.articles) {
+      throw new Error('Invalid API response format');
+    }
+    
     return data.articles;
   } catch (error) {
     console.error('Error fetching news:', error);
-    return [];
+    throw error; // Propagate the error to be handled by the component
   }
 }
 
