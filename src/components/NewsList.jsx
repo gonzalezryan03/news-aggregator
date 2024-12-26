@@ -1,6 +1,7 @@
 import './NewsList.css';
+import { userService } from '../services/userService';
 
-export function NewsList({ news, onRetrySummary }) {
+export function NewsList({ news, onSaveArticle, onRemoveSaved, userId }) {
   // Filter out articles with [Removed] source
   const filteredNews = news.filter(article => 
     article.source && 
@@ -36,14 +37,31 @@ export function NewsList({ news, onRetrySummary }) {
                 {article.summary}
               </p>
             </div>
-            <a 
-              href={article.url} 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className="read-more"
-            >
-              Read Full Article →
-            </a>
+            <div className="news-actions">
+              <a 
+                href={article.url} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="read-more"
+              >
+                Read Full Article →
+              </a>
+              {userService.isArticleSaved(userId, article.url) ? (
+                <button 
+                  className="unsave-button"
+                  onClick={() => onRemoveSaved(article.url)}
+                >
+                  Remove from Saved
+                </button>
+              ) : (
+                <button 
+                  className="save-button"
+                  onClick={() => onSaveArticle(article)}
+                >
+                  Save Article
+                </button>
+              )}
+            </div>
           </div>
         </article>
       ))}

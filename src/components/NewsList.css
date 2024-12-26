@@ -122,3 +122,37 @@
 .news-summary p.failed:hover {
   text-decoration: underline;
 } 
+
+.news-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.save-button,
+.unsave-button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.save-button {
+  background: #28a745;
+  color: white;
+}
+
+.save-button:hover {
+  background: #218838;
+}
+
+.unsave-button {
+  background: #dc3545;
+  color: white;
+}
+
+.unsave-button:hover {
+  background: #c82333;
+} 

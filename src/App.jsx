@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { NewsList } from './components/NewsList';
+import { LoginForm } from './components/LoginForm';
+import { auth } from './services/auth';
+import { userService } from './services/userService';
 import { fetchNews, summarizeArticle } from './services/api';
 import './App.css';
 
@@ -8,6 +11,17 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('technology');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [user, setUser] = useState(null);
+  const [showSaved, setShowSaved] = useState(false);
+
+  useEffect(() => {
+    // Check for logged in user
+    const checkUser = async () => {
+      const currentUser = await auth.getCurrentUser();
+      setUser(currentUser);
+    };
+    checkUser();
+  }, []);
 
   // Separate effect for fetching articles
   useEffect(() => {
@@ -102,22 +116,81 @@ function App() {
     }
   };
 
+  const handleLogin = async () => {
+    const currentUser = await auth.getCurrentUser();
+    setUser(currentUser);
+  };
+
+  const handleLogout = async () => {
+    await auth.logout();
+    setUser(null);
+  };
+
+  const handleSaveArticle = (article) => {
+    if (user) {
+      userService.saveArticle(user.id, article);
+      // Force re-render
+      setNews([...news]);
+    }
+  };
+
+  const handleRemoveSaved = (articleUrl) => {
+    if (user) {
+      userService.removeSavedArticle(user.id, articleUrl);
+      // Force re-render
+      setNews([...news]);
+    }
+  };
+
+  const toggleSaved = () => {
+    setShowSaved(!showSaved);
+  };
+
+  if (!user) {
+    return <LoginForm onLogin={handleLogin} />;
+  }
+
   return (
     <div className="app">
-      <h1>My News Feed</h1>
-      <input
-        type="text"
-        placeholder="Search news..."
-        value={searchQuery}
-        onChange={handleSearchChange}
-        onKeyDown={handleSearchSubmit}
-      />
+      <header className="app-header">
+        <h1>My News Feed</h1>
+        <div className="user-controls">
+          <button 
+            className="show-saved-btn"
+            onClick={toggleSaved}
+          >
+            {showSaved ? 'Show All News' : 'Show Saved Articles'}
+          </button>
+          <span className="user-email">{user.email}</span>
+          <button 
+            className="logout-btn"
+            onClick={handleLogout}
+          >
+            Logout
+          </button>
+        </div>
+      </header>
+
+      {!showSaved && (
+        <div className="search-container">
+          <input
+            type="text"
+            placeholder="Search news..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && setSearchQuery(e.target.value)}
+          />
+        </div>
+      )}
+
       {isLoading && <p>Loading articles...</p>}
       {error && <p className="error">{error}</p>}
       {!isLoading && !error && (
         <NewsList 
-          news={news} 
-          onRetrySummary={handleRetrySummary}
+          news={showSaved ? userService.getSavedArticles()[user.id] || [] : news}
+          onSaveArticle={handleSaveArticle}
+          onRemoveSaved={handleRemoveSaved}
+          userId={user.id}
         />
       )}
     </div>
