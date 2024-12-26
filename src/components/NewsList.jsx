@@ -1,6 +1,6 @@
 import './NewsList.css';
 
-export function NewsList({ news }) {
+export function NewsList({ news, onRetrySummary }) {
   // Filter out articles with [Removed] source
   const filteredNews = news.filter(article => 
     article.source && 
@@ -29,7 +29,12 @@ export function NewsList({ news }) {
             <p className="news-description">{article.description}</p>
             <div className="news-summary">
               <h3>AI Summary:</h3>
-              <p>{article.summary}</p>
+              <p 
+                onClick={() => article.summary.includes('unavailable') ? onRetrySummary(index) : null}
+                className={article.isSummarizing ? 'summarizing' : article.summary.includes('unavailable') ? 'failed' : ''}
+              >
+                {article.summary}
+              </p>
             </div>
             <a 
               href={article.url} 

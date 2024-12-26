@@ -108,3 +108,17 @@
     margin-bottom: 1rem;
   }
 } 
+
+.news-summary p.summarizing {
+  color: #666;
+  font-style: italic;
+}
+
+.news-summary p.failed {
+  color: #dc3545;
+  cursor: pointer;
+}
+
+.news-summary p.failed:hover {
+  text-decoration: underline;
+} 

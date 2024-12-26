@@ -53,10 +53,14 @@ export async function fetchNews(query) {
 }
 
 export async function summarizeArticle(articleContent) {
-  const prompt = `Summarize this news article in 3 concise sentences: ${articleContent}`;
-  const geminiUrl =
-    'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' +
-    geminiApiKey; // Already HTTPS
+  if (!articleContent || articleContent.length < 10) {
+    return "Not enough content to summarize.";
+  }
+
+  // Limit content length to avoid API limits
+  const truncatedContent = articleContent.slice(0, 1000);
+  const prompt = `Summarize this news article in 2-3 concise sentences: ${truncatedContent}`;
+  const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${geminiApiKey}`;
 
   try {
     const response = await fetch(geminiUrl, {
@@ -65,23 +69,34 @@ export async function summarizeArticle(articleContent) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              {
-                text: prompt,
-              },
-            ],
-          },
-        ],
-      }),
+        contents: [{
+          parts: [{
+            text: prompt
+          }]
+        }],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 200,
+        }
+      })
     });
 
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Gemini API Error:', errorText);
+      throw new Error(`Gemini API error: ${response.status}`);
+    }
+
     const data = await response.json();
-    const summary = data.candidates[0].content.parts[0].text;
-    return summary;
+    console.log('Gemini API response:', data); // Debug log
+
+    if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
+      throw new Error('Invalid response format from Gemini API');
+    }
+
+    return data.candidates[0].content.parts[0].text;
   } catch (error) {
     console.error('Error summarizing with Gemini:', error);
-    return 'Summary unavailable.';
+    return 'Summary unavailable due to an error.';
   }
 }

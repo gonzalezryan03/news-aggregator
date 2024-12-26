@@ -1,60 +1,68 @@
 import React, { useState, useEffect } from 'react';
-import NewsList from './components/NewsList'; // Correct import path
-import { fetchNews, summarizeArticle } from './services/api'; // Correct import path
+import { NewsList } from './components/NewsList';
+import { fetchNews, summarizeArticle } from './services/api';
 import './App.css';
 
 function App() {
   const [news, setNews] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('technology'); // Default query
+  const [searchQuery, setSearchQuery] = useState('technology');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // Separate effect for fetching articles
   useEffect(() => {
     const getNews = async () => {
       setIsLoading(true);
       setError(null);
       try {
         const articles = await fetchNews(searchQuery);
-        console.log('API Response:', articles);
         
-        if (!articles) {
-          throw new Error('No response from news API');
-        }
-        
-        if (!Array.isArray(articles)) {
-          console.log('Received non-array response:', typeof articles, articles);
-          throw new Error(`Invalid API response format: expected array, got ${typeof articles}`);
+        if (!articles || !Array.isArray(articles)) {
+          throw new Error('Invalid response from news API');
         }
 
-        const summarizedArticles = await Promise.all(
-          articles.map(async (article) => {
-            try {
-              return {
-                ...article,
-                summary: await summarizeArticle(article.content || article.description),
-              };
-            } catch (summaryError) {
-              console.error('Error summarizing article:', summaryError);
-              return {
-                ...article,
-                summary: 'Summary unavailable',
-              };
-            }
-          })
-        );
+        // Initialize articles with placeholder summaries
+        const articlesWithPlaceholders = articles.slice(0, 10).map(article => ({
+          ...article,
+          summary: 'Loading summary...',
+          isSummarizing: true
+        }));
         
-        setNews(summarizedArticles);
+        setNews(articlesWithPlaceholders);
+        setIsLoading(false);
+
+        // Start summarization process after articles are displayed
+        for (let i = 0; i < articlesWithPlaceholders.length; i++) {
+          const article = articlesWithPlaceholders[i];
+          try {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            const content = article.content || article.description || '';
+            const summary = await summarizeArticle(content);
+            
+            setNews(currentNews => currentNews.map((item, index) => 
+              index === i ? { ...item, summary, isSummarizing: false } : item
+            ));
+          } catch (error) {
+            setNews(currentNews => currentNews.map((item, index) => 
+              index === i ? { 
+                ...item, 
+                summary: 'Summary unavailable. Click to try again.', 
+                isSummarizing: false 
+              } : item
+            ));
+          }
+        }
       } catch (err) {
         console.error('Error fetching news:', err);
         setError('Failed to load news. Please try again later.');
         setNews([]);
-      } finally {
-        setIsLoading(false);
       }
     };
-    getNews();
+
+    if (searchQuery) {
+      getNews();
+    }
   }, [searchQuery]);
-  
 
   const handleSearchChange = (event) => {
     setSearchQuery(event.target.value);
@@ -62,10 +70,35 @@ function App() {
 
   const handleSearchSubmit = (event) => {
     if (event.key === 'Enter') {
-      // Trigger news fetch when Enter key is pressed
-      event.preventDefault(); // Prevent form submission behavior
-      // You don't need to call fetchNews here, as the useEffect will
-      // automatically refetch when searchQuery changes
+      event.preventDefault();
+    }
+  };
+
+  // Add retry functionality for failed summaries
+  const handleRetrySummary = async (index) => {
+    const article = news[index];
+    if (!article.isSummarizing) {
+      setNews(currentNews => currentNews.map((item, i) => 
+        i === index ? { ...item, isSummarizing: true, summary: 'Retrying summary...' } : item
+      ));
+
+      try {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        const content = article.content || article.description || '';
+        const summary = await summarizeArticle(content);
+        
+        setNews(currentNews => currentNews.map((item, i) => 
+          i === index ? { ...item, summary, isSummarizing: false } : item
+        ));
+      } catch (error) {
+        setNews(currentNews => currentNews.map((item, i) => 
+          i === index ? { 
+            ...item, 
+            summary: 'Summary unavailable. Click to try again.', 
+            isSummarizing: false 
+          } : item
+        ));
+      }
     }
   };
 
@@ -79,9 +112,14 @@ function App() {
         onChange={handleSearchChange}
         onKeyDown={handleSearchSubmit}
       />
-      {isLoading && <p>Loading...</p>}
+      {isLoading && <p>Loading articles...</p>}
       {error && <p className="error">{error}</p>}
-      {!isLoading && !error && <NewsList news={news} />}
+      {!isLoading && !error && (
+        <NewsList 
+          news={news} 
+          onRetrySummary={handleRetrySummary}
+        />
+      )}
     </div>
   );
 }
