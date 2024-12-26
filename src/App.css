@@ -1,0 +1,26 @@
+/* Basic styling - customize as you like */
+.app {
+  font-family: sans-serif;
+  padding: 20px;
+}
+
+.news-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.news-item {
+  border: 1px solid #ccc;
+  padding: 15px;
+  border-radius: 5px;
+}
+
+.news-item h3 {
+  margin-bottom: 5px;
+}
+
+.news-item a {
+  text-decoration: none;
+  color: blue;
+}
