@@ -6,22 +6,45 @@ import './App.css';
 function App() {
   const [news, setNews] = useState([]);
   const [searchQuery, setSearchQuery] = useState('technology'); // Default query
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const getNews = async () => {
-      const articles = await fetchNews(searchQuery);
-  
-      // Conditional check before using map
-      const summarizedArticles = Array.isArray(articles) 
-        ? await Promise.all(
-            articles.map(async (article) => ({
-              ...article,
-              summary: await summarizeArticle(article.content || article.description),
-            }))
-          )
-        : []; // or handle the error differently
-      
-      setNews(summarizedArticles);
+      setIsLoading(true);
+      setError(null);
+      try {
+        const articles = await fetchNews(searchQuery);
+        
+        if (!articles || !Array.isArray(articles)) {
+          throw new Error('Invalid response from news API');
+        }
+
+        const summarizedArticles = await Promise.all(
+          articles.map(async (article) => {
+            try {
+              return {
+                ...article,
+                summary: await summarizeArticle(article.content || article.description),
+              };
+            } catch (summaryError) {
+              console.error('Error summarizing article:', summaryError);
+              return {
+                ...article,
+                summary: 'Summary unavailable',
+              };
+            }
+          })
+        );
+        
+        setNews(summarizedArticles);
+      } catch (err) {
+        console.error('Error fetching news:', err);
+        setError('Failed to load news. Please try again later.');
+        setNews([]);
+      } finally {
+        setIsLoading(false);
+      }
     };
     getNews();
   }, [searchQuery]);
@@ -50,7 +73,9 @@ function App() {
         onChange={handleSearchChange}
         onKeyDown={handleSearchSubmit}
       />
-      <NewsList news={news} />
+      {isLoading && <p>Loading...</p>}
+      {error && <p className="error">{error}</p>}
+      {!isLoading && !error && <NewsList news={news} />}
     </div>
   );
 }
