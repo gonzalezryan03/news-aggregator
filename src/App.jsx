@@ -8,6 +8,7 @@ import './App.css';
 
 function App() {
   const [news, setNews] = useState([]);
+  const [searchInput, setSearchInput] = useState('technology');
   const [searchQuery, setSearchQuery] = useState('technology');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -78,14 +79,9 @@ function App() {
     }
   }, [searchQuery]);
 
-  const handleSearchChange = (event) => {
-    setSearchQuery(event.target.value);
-  };
-
-  const handleSearchSubmit = (event) => {
-    if (event.key === 'Enter') {
-      event.preventDefault();
-    }
+  const handleSearch = (e) => {
+    e.preventDefault();
+    setSearchQuery(searchInput);
   };
 
   // Add retry functionality for failed summaries
@@ -173,13 +169,17 @@ function App() {
 
       {!showSaved && (
         <div className="search-container">
-          <input
-            type="text"
-            placeholder="Search news..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && setSearchQuery(e.target.value)}
-          />
+          <form onSubmit={handleSearch} className="search-form">
+            <input
+              type="text"
+              placeholder="Search news..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+            />
+            <button type="submit" className="search-btn">
+              Search
+            </button>
+          </form>
         </div>
       )}
 
