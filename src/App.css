@@ -1,7 +1,9 @@
 /* Basic styling - customize as you like */
 .app {
   font-family: sans-serif;
-  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
 }
 
 .news-list {
@@ -23,4 +25,39 @@
 .news-item a {
   text-decoration: none;
   color: blue;
+}
+
+.search-container {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+input[type="text"] {
+  width: 100%;
+  max-width: 500px;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+input[type="text"]:focus {
+  border-color: #007bff;
+}
+
+.loading {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+}
+
+.error {
+  text-align: center;
+  padding: 2rem;
+  color: #dc3545;
+  background: #f8d7da;
+  border-radius: 8px;
+  margin: 1rem 0;
 }
