@@ -7,6 +7,20 @@ function delay(ms) {
 }
 
 export async function fetchNews(query) {
+  // For development - force localhost:5173 or other local ports
+  if (!window.location.hostname.includes('localhost')) {
+    console.warn('News API only works on localhost in development mode');
+    // Return mock data or error message for non-localhost environments
+    return [{
+      title: "API Limitation",
+      description: "News API requires localhost or a paid plan. Please run the application locally.",
+      url: "#",
+      urlToImage: null,
+      publishedAt: new Date().toISOString(),
+      content: "The free News API plan only works on localhost."
+    }];
+  }
+
   const newsApiUrl = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&apiKey=${newsApiKey}`;
 
   try {
