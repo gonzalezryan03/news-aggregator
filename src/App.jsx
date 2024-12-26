@@ -15,9 +15,15 @@ function App() {
       setError(null);
       try {
         const articles = await fetchNews(searchQuery);
+        console.log('API Response:', articles);
         
-        if (!articles || !Array.isArray(articles)) {
-          throw new Error('Invalid response from news API');
+        if (!articles) {
+          throw new Error('No response from news API');
+        }
+        
+        if (!Array.isArray(articles)) {
+          console.log('Received non-array response:', typeof articles, articles);
+          throw new Error(`Invalid API response format: expected array, got ${typeof articles}`);
         }
 
         const summarizedArticles = await Promise.all(
